@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+  namespace: learning
+  annotations:
+    external-dns.alpha.kubernetes.io/target: YOUR_DOMAIN
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - learning.YOUR_DOMAIN
+      secretName: learning-tls-ingress
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-test
+                port:
+                  name: http
+      host: learning.YOUR_DOMAIN
+

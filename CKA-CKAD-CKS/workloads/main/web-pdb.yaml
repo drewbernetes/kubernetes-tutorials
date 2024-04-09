@@ -1,0 +1,55 @@
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-test
+  namespace: learning
+  labels:
+    app: web-test
+spec:
+  replicas: 6
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: web-test
+  template:
+    metadata:
+      labels:
+        app: web-test
+    spec:
+      containers:
+        - name: node-reporter
+          image: drewviles/k8s-node-reporter:0.0.1
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              port: 8080
+              path: /
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: learning
+  name: web-test
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: web-test

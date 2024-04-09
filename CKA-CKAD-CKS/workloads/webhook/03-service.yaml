@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: drew-enforce-webhook
+  namespace: learning
+spec:
+  ports:
+    - port: 443
+      protocol: TCP
+      targetPort: 8443
+  selector:
+    app: drew-enforce

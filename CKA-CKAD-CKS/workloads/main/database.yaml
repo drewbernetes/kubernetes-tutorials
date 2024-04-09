@@ -1,0 +1,85 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sql-passwd
+  namespace: learning
+data:
+  passwd: c29tZVBhc3N3b3Jk
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sql-config
+  namespace: learning
+data:
+  cnf: |
+    [mysqld]
+    slow-query-log = 1
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sql
+  namespace: learning
+  labels:
+    app: sql
+spec:
+  serviceName: sql
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sql
+  template:
+    metadata:
+      labels:
+        app: sql
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: topology.kubernetes.io/zone
+              labelSelector:
+                matchLabels:
+                  app: web
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: topology.kubernetes.io/zone
+              labelSelector:
+                matchLabels:
+                  app: sql
+      containers:
+        - name: mariadb
+          image: mariadb:10.11
+          ports:
+            - containerPort: 3306
+              name: sql
+          env:
+            - name: MARIADB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sql-passwd
+                  key: passwd
+            - name: MARIADB_CONFIGURATION
+              valueFrom:
+                configMapKeyRef:
+                  name: sql-config
+                  key: cnf
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: learning
+  name: sql
+spec:
+  type: LoadBalancer
+  ports:
+    - name: sql
+      port: 3306
+      protocol: TCP
+      targetPort: 3306
+  selector:
+    app: sql

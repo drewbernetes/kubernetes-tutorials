@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-conf
+  namespace: security-learning
+data:
+  default: |
+    server {
+      listen 8081 default_server;
+      server_name _;
+      root /usr/share/nginx/html;
+      index index.html index.html;
+    }
+  metrics: |
+    server {
+      listen 8080;
+      server_name _;
+      location /stub_status {
+        stub_status on;
+      }
+    }

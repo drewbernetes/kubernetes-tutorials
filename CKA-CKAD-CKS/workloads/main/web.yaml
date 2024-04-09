@@ -1,0 +1,85 @@
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-test
+  namespace: learning
+  labels:
+    app: web-test
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: web-test
+  template:
+    metadata:
+      labels:
+        app: web-test
+    spec:
+#      affinity:
+#        podAffinity:
+#          preferredDuringSchedulingIgnoredDuringExecution:
+#            - podAffinityTerm:
+#                topologyKey: topology.kubernetes.io/zone
+#                labelSelector:
+#                  matchLabels:
+#                    app: sql
+#              weight: 100
+#        podAntiAffinity:
+#          requiredDuringSchedulingIgnoredDuringExecution:
+#            - topologyKey: topology.kubernetes.io/zone
+#              labelSelector:
+#                matchLabels:
+#                  app: web
+#      initContainers:
+#        - name: init-db
+#          image: busybox:1.28
+#          command: [ 'sh', '-c', "until nslookup sql.learning.svc.cluster.local; do echo waiting for db; sleep 2; done" ]
+      containers:
+        - name: nginx
+          image: nginx:1.25
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: conf
+              mountPath: /etc/nginx/conf.d
+        - name: nginx-prometheus
+          image: nginx/nginx-prometheus-exporter
+          ports:
+            - containerPort: 9113
+              name: http-metrics
+      volumes:
+        - name: conf
+          configMap:
+            name: web-conf
+            items:
+              - key: default
+                path: default.conf
+              - key: metrics
+                path: metrics.conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: learning
+  name: web-test
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 80
+    - name: http-metrics
+      port: 9090
+      protocol: TCP
+      targetPort: 9113
+  selector:
+    app: web-test

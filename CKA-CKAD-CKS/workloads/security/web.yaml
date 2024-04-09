@@ -1,0 +1,80 @@
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-test
+  namespace: security-learning
+  labels:
+    app: web-test
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: web-test
+  template:
+    metadata:
+      labels:
+        app: web-test
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+        runAsNonRoot: true
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 8081
+              name: http
+          volumeMounts:
+            - name: conf
+              mountPath: /etc/nginx/conf.d
+        - name: nginx-prometheus
+          image: nginx/nginx-prometheus-exporter
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 9113
+              name: http-metrics
+      volumes:
+        - name: conf
+          configMap:
+            name: web-conf
+            items:
+              - key: default
+                path: default.conf
+              - key: metrics
+                path: metrics.conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: security-learning
+  name: web-test
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 80
+    - name: http-metrics
+      port: 9090
+      protocol: TCP
+      targetPort: 9113
+  selector:
+    app: web-test

@@ -1,0 +1,11 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web-test
+  namespace: learning
+spec:
+  selector:
+    matchLabels:
+      app: web-test
+  maxUnavailable: 1

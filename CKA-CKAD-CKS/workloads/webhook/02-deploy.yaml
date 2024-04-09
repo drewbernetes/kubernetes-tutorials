@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drew-enforce
+  namespace: learning
+  labels:
+    app: drew-enforce
+spec:
+  selector:
+    matchLabels:
+      app: drew-enforce
+  template:
+    metadata:
+      labels:
+        app: drew-enforce
+    spec:
+      containers:
+      - image: drewviles/drenforce
+        name: drew-enforce
+        ports:
+          - containerPort: 8443
+        imagePullPolicy: Always
+        volumeMounts:
+        - mountPath: /etc/certs/webhook
+          name: tls
+          readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: drew-enforce-webhook-cert

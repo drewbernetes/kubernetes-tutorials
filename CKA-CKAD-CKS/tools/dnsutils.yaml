@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dnsutils
+  namespace: default
+  labels:
+    app: dnsutils
+spec:
+  setHostnameAsFQDN: true
+  containers:
+  - name: dnsutils
+    image: ubuntu:22.04
+    command:
+      - sleep
+      - "infinity"
+    imagePullPolicy: IfNotPresent
+  restartPolicy: Always

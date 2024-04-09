@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: termination
+spec:
+  containers:
+    - name: termination-container
+      image: ubuntu:22.04
+      command:
+        - "/bin/sh"
+      args:
+        - "-c"
+        - "sleep 10 & echo 'the process failed' > /dev/stdout; exit 1"
+      terminationMessagePolicy: FallbackToLogsOnError
