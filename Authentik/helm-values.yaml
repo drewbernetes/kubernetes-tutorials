@@ -1,0 +1,48 @@
+global:
+  env:
+    - name: AUTHENTIK_SECRET_KEY
+      value: "PASS%w0rd*PASS%w0rd-"
+server:
+  replicas: 1
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/tls-acme: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      external-dns.alpha.kubernetes.io/target: some-domain.com
+    ingressClassName: nginx
+    hosts:
+      - oidc-learning.some-domain.com
+    paths:
+      - /
+    pathType: Prefix
+    tls:
+      - secretName: authentik-ingress-cert
+        hosts:
+          - oidc-learning.some-domain.com
+    https: true
+authentik:
+  error_reporting:
+    enabled: true
+  postgresql:
+    password: "authentik"
+postgresql:
+  enabled: true
+  auth:
+    username: authentik
+    database: authentik
+    password: "authentik"
+  primary:
+    extendedConfiguration: |
+      max_connections = 500
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      accessModes:
+        - ReadWriteOnce
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
